@@ -1,0 +1,721 @@
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700;800&family=Noto+Sans+JP:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --ink:#1E2A3A;
+    --indigo:#2F4C7C;
+    --indigo-dark:#20345A;
+    --paper:#F1F0EB;
+    --paper-alt:#FFFFFF;
+    --hanko:#B3392C;
+    --hanko-dark:#8F2E23;
+    --stamp-green:#3C7A5C;
+    --line:#D6D2C4;
+    --muted:#6B7280;
+    --shadow: 0 1px 2px rgba(30,42,58,0.06), 0 4px 12px rgba(30,42,58,0.05);
+  }
+  *{box-sizing:border-box;}
+  body,html{margin:0;padding:0;}
+  .app{
+    font-family:'Noto Sans JP', sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100%;
+    padding:28px 20px 60px;
+  }
+  .wrap{max-width:1040px;margin:0 auto;}
+
+  /* Header */
+  .header{
+    display:flex;justify-content:space-between;align-items:flex-end;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;margin-bottom:22px;
+    flex-wrap:wrap;gap:10px;
+  }
+  .header .title{
+    font-family:'Shippori Mincho', serif;
+    font-weight:800;
+    font-size:28px;
+    letter-spacing:.04em;
+    display:flex;align-items:baseline;gap:10px;
+  }
+  .header .title .stamp-mark{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border:2.5px solid var(--hanko);
+    border-radius:50%;color:var(--hanko);
+    font-family:'Shippori Mincho', serif;font-weight:800;font-size:14px;
+    transform:rotate(-8deg);
+    flex-shrink:0;
+  }
+  .header .sub{
+    font-size:12px;color:var(--muted);letter-spacing:.05em;
+  }
+
+  /* Tabs */
+  .tabs{display:flex;gap:8px;margin-bottom:18px;}
+  .tab-btn{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;font-size:15px;
+    padding:9px 22px;
+    background:transparent;
+    border:1.5px solid var(--ink);
+    color:var(--ink);
+    cursor:pointer;
+    border-radius:2px 2px 0 0;
+    letter-spacing:.06em;
+    transition:background .15s, color .15s;
+  }
+  .tab-btn.active{background:var(--ink);color:#fff;}
+  .tab-btn:not(.active):hover{background:rgba(30,42,58,0.06);}
+
+  /* Date nav */
+  .datebar{
+    display:flex;align-items:center;gap:10px;
+    background:var(--paper-alt);
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:10px 14px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+    flex-wrap:wrap;
+  }
+  .datebar button{
+    border:1px solid var(--line);background:#fff;color:var(--ink);
+    border-radius:6px;width:32px;height:32px;cursor:pointer;font-size:15px;
+  }
+  .datebar button:hover{background:var(--paper);}
+  .datebar input[type=date]{
+    font-family:'JetBrains Mono', monospace;font-size:14px;
+    border:1px solid var(--line);border-radius:6px;padding:6px 8px;
+    background:#fff;color:var(--ink);
+  }
+  .datebar .today-label{
+    font-size:13px;color:var(--muted);margin-left:auto;
+  }
+  .datebar .today-btn{
+    width:auto;padding:0 12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;
+  }
+
+  /* Timeline board */
+  .board{
+    background:var(--paper-alt);
+    border:1px solid var(--line);
+    border-radius:8px;
+    box-shadow:var(--shadow);
+    margin-bottom:26px;
+    overflow:hidden;
+  }
+  .board-head{
+    display:flex;
+    border-bottom:1px solid var(--line);
+    padding:10px 16px 8px 150px;
+    position:relative;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;color:var(--muted);
+  }
+  .board-head span{flex:1;text-align:left;}
+  .row{
+    display:flex;align-items:stretch;
+    border-bottom:1px solid var(--line);
+    min-height:46px;
+  }
+  .row:last-child{border-bottom:none;}
+  .row-label{
+    width:150px;flex-shrink:0;
+    display:flex;align-items:center;gap:8px;
+    padding:0 12px;
+    font-size:13px;font-weight:600;
+    border-right:1px solid var(--line);
+    background:#FAF9F5;
+  }
+  .row-label .dot{width:7px;height:7px;border-radius:50%;background:var(--indigo);flex-shrink:0;}
+  .row-track{
+    position:relative;flex:1;
+    background-image:repeating-linear-gradient(to right, var(--line) 0, var(--line) 1px, transparent 1px, transparent calc(100%/12));
+  }
+  .row-track:hover{background-color:rgba(47,76,124,0.03);cursor:pointer;}
+  .slot{
+    position:absolute;top:5px;bottom:5px;
+    background:var(--indigo);
+    border-radius:4px;
+    color:#fff;font-size:11px;
+    display:flex;flex-direction:column;justify-content:center;
+    padding:2px 6px;
+    overflow:hidden;
+    box-shadow:0 1px 3px rgba(0,0,0,0.15);
+    cursor:default;
+  }
+  .slot .who{font-weight:600;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;}
+  .slot .time{font-family:'JetBrains Mono',monospace;font-size:10px;opacity:.85;}
+  .slot .stamp{
+    position:absolute;right:3px;top:3px;
+    width:14px;height:14px;border-radius:50%;
+    border:1.4px solid rgba(255,255,255,.85);
+    font-size:8px;display:flex;align-items:center;justify-content:center;
+    font-family:'Shippori Mincho',serif;
+  }
+
+  /* Add booking button */
+  .add-bar{display:flex;justify-content:flex-end;margin-bottom:16px;}
+  .add-btn{
+    font-family:'Shippori Mincho', serif;font-weight:700;
+    background:var(--indigo);color:#fff;border:none;
+    padding:11px 22px;border-radius:6px;cursor:pointer;
+    font-size:14px;letter-spacing:.04em;
+    box-shadow:var(--shadow);
+    transition:background .15s;
+  }
+  .add-btn:hover{background:var(--indigo-dark);}
+
+  /* List / ledger */
+  .ledger{
+    background:var(--paper-alt);
+    border:1px solid var(--line);
+    border-radius:8px;
+    box-shadow:var(--shadow);
+    overflow:hidden;
+  }
+  .ledger-title{
+    font-family:'Shippori Mincho', serif;font-weight:700;font-size:15px;
+    padding:14px 18px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .ledger-title .count{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);font-weight:500;}
+  table{width:100%;border-collapse:collapse;}
+  th{
+    text-align:left;font-size:11px;color:var(--muted);font-weight:600;
+    padding:9px 14px;border-bottom:1px solid var(--line);background:#FAF9F5;
+    letter-spacing:.04em;
+  }
+  td{padding:11px 14px;font-size:13px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+  .badge{
+    display:inline-block;padding:2px 8px;border-radius:10px;
+    font-size:11px;font-weight:600;background:rgba(47,76,124,0.1);color:var(--indigo);
+  }
+  .cancel-btn{
+    border:1px solid var(--hanko);color:var(--hanko);background:#fff;
+    border-radius:5px;padding:5px 12px;font-size:12px;cursor:pointer;
+    font-family:'Noto Sans JP',sans-serif;font-weight:600;
+    transition:background .15s,color .15s;
+  }
+  .cancel-btn:hover{background:var(--hanko);color:#fff;}
+  .empty-row td{
+    text-align:center;color:var(--muted);padding:32px;font-size:13px;
+  }
+
+  /* Modal */
+  .overlay{
+    position:fixed;inset:0;background:rgba(30,42,58,0.45);
+    display:none;align-items:center;justify-content:center;z-index:50;
+    padding:20px;
+  }
+  .overlay.show{display:flex;}
+  .modal{
+    background:#fff;border-radius:10px;max-width:420px;width:100%;
+    box-shadow:0 12px 40px rgba(0,0,0,0.25);
+    animation:pop .15s ease-out;
+  }
+  @keyframes pop{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}
+  .modal-head{
+    font-family:'Shippori Mincho', serif;font-weight:700;font-size:17px;
+    padding:18px 22px 12px;border-bottom:1px solid var(--line);
+    display:flex;justify-content:space-between;align-items:center;
+  }
+  .modal-head button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
+  .modal-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
+  .field label{
+    display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;
+  }
+  .field input, .field select{
+    width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:6px;
+    font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:#FAF9F5;
+  }
+  .field input:focus, .field select:focus{outline:2px solid var(--indigo);outline-offset:1px;background:#fff;}
+  .field-row{display:flex;gap:10px;}
+  .field-row .field{flex:1;}
+  .error-msg{
+    background:rgba(179,57,44,0.08);color:var(--hanko-dark);
+    border:1px solid rgba(179,57,44,0.3);border-radius:6px;
+    padding:9px 12px;font-size:12.5px;display:none;line-height:1.5;
+  }
+  .error-msg.show{display:block;}
+  .modal-foot{
+    padding:14px 22px 20px;display:flex;justify-content:flex-end;gap:10px;
+  }
+  .btn-secondary{
+    background:#fff;border:1px solid var(--line);color:var(--ink);
+    padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-family:'Noto Sans JP',sans-serif;
+  }
+  .btn-primary{
+    background:var(--indigo);border:none;color:#fff;
+    padding:9px 18px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:600;
+    font-family:'Noto Sans JP',sans-serif;
+  }
+  .btn-primary:hover{background:var(--indigo-dark);}
+
+  .toast{
+    position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);
+    background:var(--ink);color:#fff;padding:11px 22px;border-radius:8px;
+    font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,0.25);
+    opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:100;
+    display:flex;align-items:center;gap:8px;
+  }
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  .toast .dot{width:7px;height:7px;border-radius:50%;background:var(--stamp-green);}
+  .toast.err .dot{background:var(--hanko);}
+
+  .loading{padding:60px;text-align:center;color:var(--muted);font-size:13px;}
+
+  @media (max-width:640px){
+    .row-label{width:100px;font-size:12px;}
+    .board-head{padding-left:100px;}
+    .field-row{flex-direction:column;}
+  }
+</style>
+
+<div class="app">
+  <div class="wrap">
+    <div class="header">
+      <div class="title"><span class="stamp-mark">予</span>会議室・社用車 予約簿</div>
+      <div class="sub">全社共有 / 社員番号で予約者を管理</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab-btn active" data-cat="room" onclick="switchCategory('room')">会議室</button>
+      <button class="tab-btn" data-cat="car" onclick="switchCategory('car')">社用車</button>
+    </div>
+
+    <div class="datebar">
+      <button onclick="shiftDate(-1)" aria-label="前日">‹</button>
+      <input type="date" id="date-input" onchange="onDateChange()">
+      <button onclick="shiftDate(1)" aria-label="翌日">›</button>
+      <button class="today-btn" onclick="goToday()">今日</button>
+      <span class="today-label" id="weekday-label"></span>
+    </div>
+
+    <div id="board" class="board"><div class="loading">読み込み中…</div></div>
+
+    <div class="add-bar">
+      <button class="add-btn" onclick="openModal()">＋ 予約を入れる</button>
+    </div>
+
+    <div class="ledger">
+      <div class="ledger-title">
+        <span id="ledger-title-text">この日の予約一覧</span>
+        <span class="count" id="ledger-count"></span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:16%">対象</th>
+            <th style="width:24%">件名</th>
+            <th style="width:14%">時間</th>
+            <th style="width:12%">社員番号</th>
+            <th style="width:18%">氏名</th>
+            <th style="width:10%"></th>
+          </tr>
+        </thead>
+        <tbody id="ledger-body"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-head">
+      <span>予約を入れる</span>
+      <button onclick="closeModal()" aria-label="閉じる">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="error-msg" id="modal-error"></div>
+      <div class="field">
+        <label>区分</label>
+        <select id="f-category" onchange="populateResourceOptions()">
+          <option value="room">会議室</option>
+          <option value="car">社用車</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>対象</label>
+        <select id="f-resource"></select>
+      </div>
+      <div class="field">
+        <label>日付</label>
+        <input type="date" id="f-date">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>開始時刻</label>
+          <input type="time" id="f-start" step="900">
+        </div>
+        <div class="field">
+          <label>終了時刻</label>
+          <input type="time" id="f-end" step="900">
+        </div>
+      </div>
+      <div class="field">
+        <label>件名 / 使用目的</label>
+        <input type="text" id="f-purpose" placeholder="例: 定例MTG、〇〇商事様訪問 など">
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>社員番号</label>
+          <input type="text" id="f-empid" placeholder="例: 10234" inputmode="numeric">
+        </div>
+        <div class="field">
+          <label>氏名</label>
+          <input type="text" id="f-empname" placeholder="例: 山田 太郎">
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn-secondary" onclick="closeModal()">キャンセル</button>
+      <button class="btn-primary" onclick="submitBooking()">予約を確定する</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
+
+<script>
+const ROOMS = ["大会議室","小会議室","ミーティングルームA","ミーティングルームB"];
+const CARS  = ["プリウス","ハイエース","プロボックス","軽トラ","軽バン"];
+const DAY_START = 8;   // 08:00
+const DAY_END   = 20;  // 20:00
+
+// ▼▼▼ ここをGoogle Apps Scriptの「ウェブアプリURL」に書き換えてください ▼▼▼
+// 例: https://script.google.com/macros/s/AKfycb.../exec
+const CONFIG = {
+  API_URL: "https://script.google.com/macros/s/AKfycbxs0He7qwF4wnOen07fDLUv6kIf-SwmlxggD2lIbu2DjU9brtbZenJit8cKEbQj_GURFg/exec"
+};
+
+let bookings = [];
+let currentCategory = "room";
+let currentDate = todayStr();
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+
+function pad(n){return String(n).padStart(2,"0");}
+
+function toMinutes(t){
+  const [h,m] = t.split(":").map(Number);
+  return h*60+m;
+}
+
+function resourceList(cat){ return cat === "room" ? ROOMS : CARS; }
+
+// ---------- backend (Google Apps Script) ----------
+async function loadBookings(){
+  try{
+    const res = await fetch(CONFIG.API_URL, { method: "GET" });
+    const data = await res.json();
+    bookings = data.success ? data.bookings : [];
+  }catch(e){
+    console.error(e);
+    showToast("予約データの取得に失敗しました。通信状況を確認してください。", true);
+  }
+}
+
+// 予約を1件追加する。サーバー側で重複チェックも行う（早い者勝ちを保証）。
+async function addBookingRemote(booking){
+  const res = await fetch(CONFIG.API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" }, // preflight回避のためtext/plainで送る
+    body: JSON.stringify({ action: "add", booking })
+  });
+  return await res.json();
+}
+
+// 予約を1件取り消す
+async function cancelBookingRemote(id){
+  const res = await fetch(CONFIG.API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify({ action: "cancel", id })
+  });
+  return await res.json();
+}
+
+// ---------- rendering ----------
+function switchCategory(cat){
+  currentCategory = cat;
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.cat === cat);
+  });
+  render();
+}
+
+function shiftDate(delta){
+  const d = new Date(currentDate + "T00:00:00");
+  d.setDate(d.getDate()+delta);
+  currentDate = d.toISOString().slice(0,10);
+  document.getElementById("date-input").value = currentDate;
+  render();
+}
+
+function goToday(){
+  currentDate = todayStr();
+  document.getElementById("date-input").value = currentDate;
+  render();
+}
+
+function onDateChange(){
+  currentDate = document.getElementById("date-input").value || todayStr();
+  render();
+}
+
+function weekdayLabel(dateStr){
+  const wd = ["日","月","火","水","木","金","土"];
+  const d = new Date(dateStr + "T00:00:00");
+  return `${d.getMonth()+1}月${d.getDate()}日（${wd[d.getDay()]}）`;
+}
+
+function render(){
+  document.getElementById("weekday-label").textContent = weekdayLabel(currentDate);
+  renderBoard();
+  renderLedger();
+}
+
+function renderBoard(){
+  const board = document.getElementById("board");
+  const list = resourceList(currentCategory);
+  const dayBookings = bookings.filter(b => b.category === currentCategory && b.date === currentDate);
+  const totalMin = (DAY_END - DAY_START) * 60;
+
+  let html = `<div class="board-head">`;
+  for(let h = DAY_START; h < DAY_END; h += 2){
+    html += `<span>${pad(h)}:00</span>`;
+  }
+  html += `</div>`;
+
+  list.forEach(resource=>{
+    const items = dayBookings.filter(b => b.resource === resource)
+                              .sort((a,b)=>toMinutes(a.start)-toMinutes(b.start));
+    html += `<div class="row">
+      <div class="row-label"><span class="dot"></span>${resource}</div>
+      <div class="row-track" onclick="quickAdd('${resource}')">`;
+    items.forEach(b=>{
+      const startMin = Math.max(toMinutes(b.start), DAY_START*60);
+      const endMin = Math.min(toMinutes(b.end), DAY_END*60);
+      const left = ((startMin - DAY_START*60) / totalMin) * 100;
+      const width = ((endMin - startMin) / totalMin) * 100;
+      const initial = (b.empName || "").trim().slice(0,1) || "済";
+      const label = b.purpose || b.empName;
+      html += `<div class="slot" style="left:${left}%;width:${Math.max(width,2)}%"
+                title="${escapeHtml(b.purpose)} / ${escapeHtml(b.empName)}（${b.empId}） ${b.start}〜${b.end}">
+                <span class="who">${escapeHtml(label)}</span>
+                <span class="time">${b.start}-${b.end}</span>
+                <span class="stamp">${escapeHtml(initial)}</span>
+              </div>`;
+    });
+    html += `</div></div>`;
+  });
+
+  board.innerHTML = html;
+}
+
+function renderLedger(){
+  const body = document.getElementById("ledger-body");
+  const catLabel = currentCategory === "room" ? "会議室" : "社用車";
+  document.getElementById("ledger-title-text").textContent = `${weekdayLabel(currentDate)}の予約一覧（${catLabel}）`;
+
+  const dayBookings = bookings.filter(b => b.category === currentCategory && b.date === currentDate)
+                               .sort((a,b)=> a.resource.localeCompare(b.resource,'ja') || toMinutes(a.start)-toMinutes(b.start));
+
+  document.getElementById("ledger-count").textContent = `${dayBookings.length} 件`;
+
+  if(dayBookings.length === 0){
+    body.innerHTML = `<tr class="empty-row"><td colspan="6">この日の予約はまだありません。</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = dayBookings.map(b => `
+    <tr>
+      <td><span class="badge">${escapeHtml(b.resource)}</span></td>
+      <td>${escapeHtml(b.purpose)}</td>
+      <td>${b.start} 〜 ${b.end}</td>
+      <td>${escapeHtml(b.empId)}</td>
+      <td>${escapeHtml(b.empName)}</td>
+      <td style="text-align:right"><button class="cancel-btn" onclick="cancelBooking('${b.id}')">取消</button></td>
+    </tr>
+  `).join("");
+}
+
+function escapeHtml(s){
+  return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+// ---------- modal ----------
+function populateResourceOptions(){
+  const cat = document.getElementById("f-category").value;
+  const sel = document.getElementById("f-resource");
+  sel.innerHTML = resourceList(cat).map(r => `<option value="${r}">${r}</option>`).join("");
+}
+
+function openModal(){
+  document.getElementById("f-category").value = currentCategory;
+  populateResourceOptions();
+  document.getElementById("f-date").value = currentDate;
+  document.getElementById("f-start").value = "";
+  document.getElementById("f-end").value = "";
+  document.getElementById("f-purpose").value = "";
+  document.getElementById("f-empid").value = "";
+  document.getElementById("f-empname").value = "";
+  hideModalError();
+  document.getElementById("overlay").classList.add("show");
+}
+
+function quickAdd(resource){
+  openModal();
+  document.getElementById("f-category").value = currentCategory;
+  populateResourceOptions();
+  document.getElementById("f-resource").value = resource;
+}
+
+function closeModal(){
+  document.getElementById("overlay").classList.remove("show");
+}
+
+function showModalError(msg){
+  const el = document.getElementById("modal-error");
+  el.textContent = msg;
+  el.classList.add("show");
+}
+function hideModalError(){
+  document.getElementById("modal-error").classList.remove("show");
+}
+
+function hasOverlap(category, resource, date, start, end, excludeId){
+  const s = toMinutes(start), e = toMinutes(end);
+  return bookings.some(b=>{
+    if(b.id === excludeId) return false;
+    if(b.category !== category || b.resource !== resource || b.date !== date) return false;
+    const bs = toMinutes(b.start), be = toMinutes(b.end);
+    return s < be && bs < e; // overlap test
+  });
+}
+
+async function submitBooking(){
+  const category = document.getElementById("f-category").value;
+  const resource = document.getElementById("f-resource").value;
+  const date = document.getElementById("f-date").value;
+  const start = document.getElementById("f-start").value;
+  const end = document.getElementById("f-end").value;
+  const purpose = document.getElementById("f-purpose").value.trim();
+  const empId = document.getElementById("f-empid").value.trim();
+  const empName = document.getElementById("f-empname").value.trim();
+
+  if(!date || !start || !end){
+    showModalError("日付・開始時刻・終了時刻を入力してください。");
+    return;
+  }
+  if(toMinutes(start) >= toMinutes(end)){
+    showModalError("終了時刻は開始時刻より後にしてください。");
+    return;
+  }
+  if(!purpose){
+    showModalError("件名・使用目的を入力してください。");
+    return;
+  }
+  if(!empId || !empName){
+    showModalError("社員番号と氏名を入力してください。");
+    return;
+  }
+
+  // クライアント側で先に簡易チェック（体感速度向上のため）。最終判定は必ずサーバー側で行う。
+  await loadBookings();
+  if(hasOverlap(category, resource, date, start, end, null)){
+    showModalError(`この時間帯は既に「${resource}」が予約されています。別の時間または別の対象を選んでください。`);
+    return;
+  }
+
+  const submitBtn = document.querySelector(".modal-foot .btn-primary");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "送信中…";
+
+  let result;
+  try{
+    result = await addBookingRemote({ category, resource, date, start, end, purpose, empId, empName });
+  }catch(e){
+    submitBtn.disabled = false;
+    submitBtn.textContent = "予約を確定する";
+    showModalError("通信に失敗しました。時間を置いて再度お試しください。");
+    return;
+  }
+  submitBtn.disabled = false;
+  submitBtn.textContent = "予約を確定する";
+
+  if(!result.success){
+    // サーバー側で重複が検知された場合（＝自分より先に他の人が予約を確定させた場合）はここに来る
+    showModalError(result.error || "予約に失敗しました。もう一度お試しください。");
+    await loadBookings();
+    render();
+    return;
+  }
+
+  await loadBookings();
+  closeModal();
+  currentCategory = category;
+  currentDate = date;
+  document.querySelectorAll(".tab-btn").forEach(b=>{
+    b.classList.toggle("active", b.dataset.cat === category);
+  });
+  document.getElementById("date-input").value = date;
+  render();
+  showToast(`「${resource}」を予約しました（${start}〜${end}）`);
+}
+
+async function cancelBooking(id){
+  const b = bookings.find(x=>x.id===id);
+  if(!b) return;
+  const ok = confirm(`この予約を取り消します。よろしいですか？\n\n${b.resource} / ${b.date} ${b.start}〜${b.end}\n${b.empName}（${b.empId}）`);
+  if(!ok) return;
+
+  let result;
+  try{
+    result = await cancelBookingRemote(id);
+  }catch(e){
+    showToast("通信に失敗しました。時間を置いて再度お試しください。", true);
+    return;
+  }
+  if(!result.success){
+    showToast(result.error || "取り消しに失敗しました。", true);
+  }else{
+    showToast("予約を取り消しました");
+  }
+  await loadBookings();
+  render();
+}
+
+let toastTimer = null;
+function showToast(msg, isErr){
+  const t = document.getElementById("toast");
+  document.getElementById("toast-text").textContent = msg;
+  t.classList.toggle("err", !!isErr);
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), 3200);
+}
+
+// ---------- init ----------
+(async function init(){
+  document.getElementById("date-input").value = currentDate;
+  await loadBookings();
+  render();
+
+  // light polling so concurrent users see updates without manual refresh
+  setInterval(async ()=>{
+    try{
+      await loadBookings();
+      render();
+    }catch(e){}
+  }, 15000);
+})();
+</script>
