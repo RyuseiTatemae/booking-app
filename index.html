@@ -263,9 +263,9 @@
         </div>
       </div>
 
-      <div class="field-row">
-        <div class="field"><label>社員番号</label><input type="text" id="f-empid" placeholder="例: 10234" inputmode="numeric"></div>
-        <div class="field"><label>氏名</label><input type="text" id="f-empname" placeholder="例: 山田 太郎"></div>
+      <div class="field">
+        <label>氏名</label>
+        <input type="text" id="f-empname" placeholder="例: 山田 太郎">
       </div>
     </div>
     <div class="modal-foot">
@@ -450,7 +450,7 @@ function renderDayBoard(){
       const top = 8 + b._lane * laneHeight;
       html += `<div class="slot${currentCategory==='guest'?' guest':''}"
                 style="left:${left}%;width:${Math.max(width,2)}%;top:${top}px;height:${laneHeight-6}px"
-                title="${escapeHtml(b.purpose)} / ${escapeHtml(b.empName)}（${escapeHtml(b.empId)}） ${b.start}〜${b.end}${b.visitorName?(' / 来客: '+escapeHtml(b.visitorName)):''}"
+                title="${escapeHtml(b.purpose)} / ${escapeHtml(b.empName)} ${b.start}〜${b.end}${b.visitorName?(' / 来客: '+escapeHtml(b.visitorName)):''}"
                 onclick="event.stopPropagation();openCancelModal('${b.id}')">
                 <span class="who">${escapeHtml(b.empName)}</span>
               </div>`;
@@ -513,39 +513,38 @@ function renderWeekBoard(){
 function ledgerHeaderRow(){
   if(currentCategory === "guest"){
     return `<tr>
-      <th style="width:14%">氏名</th>
-      <th style="width:14%">来客者</th>
-      <th style="width:20%">件名 / 使用目的</th>
+      <th style="width:12%">日付</th>
+      <th style="width:15%">氏名</th>
+      <th style="width:15%">来客者</th>
+      <th style="width:24%">件名 / 使用目的</th>
       <th style="width:14%">会議室</th>
       <th style="width:12%">時間</th>
-      <th style="width:12%">日付</th>
       <th style="width:14%"></th>
     </tr>`;
   }
   return `<tr>
-    <th style="width:16%">氏名</th>
-    <th style="width:14%">対象</th>
-    <th style="width:20%">件名</th>
+    <th style="width:13%">日付</th>
+    <th style="width:18%">氏名</th>
+    <th style="width:15%">対象</th>
+    <th style="width:24%">件名</th>
     <th style="width:14%">時間</th>
-    <th style="width:12%">社員番号</th>
-    <th style="width:12%">日付</th>
     <th style="width:12%"></th>
   </tr>`;
 }
 function findById(id){ return bookings.find(x => x.id === id); }
 
-function ledgerRow(b, showDate){
-  const dateCell = showDate ? escapeHtml(b.date) : '';
+function ledgerRow(b){
+  const dateCell = escapeHtml(b.date);
   if(b.category === "guest"){
     const linkedRoom = b.linkedId ? findById(b.linkedId) : null;
     const roomCell = linkedRoom ? `<span class="badge">${escapeHtml(linkedRoom.resource)}</span>` : `<span style="color:var(--muted)">－</span>`;
     return `<tr>
+      <td>${dateCell}</td>
       <td class="who-cell">${escapeHtml(b.empName)}</td>
       <td>${escapeHtml(b.visitorName)}</td>
       <td>${escapeHtml(b.purpose)}</td>
       <td>${roomCell}</td>
       <td>${b.start} 〜 ${b.end}</td>
-      <td>${dateCell}</td>
       <td style="text-align:right;white-space:nowrap">
         <button class="cancel-btn" style="border-color:var(--indigo);color:var(--indigo);margin-right:6px;" onclick="openEditModal('${b.id}')">編集</button>
         <button class="cancel-btn" onclick="openCancelModal('${b.id}')">取消</button>
@@ -553,12 +552,11 @@ function ledgerRow(b, showDate){
     </tr>`;
   }
   return `<tr>
+    <td>${dateCell}</td>
     <td class="who-cell">${escapeHtml(b.empName)}</td>
     <td><span class="badge">${escapeHtml(b.resource)}</span></td>
     <td>${escapeHtml(b.purpose)}</td>
     <td>${b.start} 〜 ${b.end}</td>
-    <td>${escapeHtml(b.empId)}</td>
-    <td>${dateCell}</td>
     <td style="text-align:right;white-space:nowrap">
       <button class="cancel-btn" style="border-color:var(--indigo);color:var(--indigo);margin-right:6px;" onclick="openEditModal('${b.id}')">編集</button>
       <button class="cancel-btn" onclick="openCancelModal('${b.id}')">取消</button>
@@ -574,8 +572,9 @@ function renderLedgerDay(){
                         .sort((a,b)=> a.empName.localeCompare(b.empName,'ja') || toMinutes(a.start)-toMinutes(b.start));
   document.getElementById("ledger-count").textContent = `${list.length} 件`;
   const body = document.getElementById("ledger-body");
-  if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="7">この日の予約はまだありません。</td></tr>`; return; }
-  body.innerHTML = list.map(b => ledgerRow(b, false)).join("");
+  const colspan = currentCategory === "guest" ? 7 : 6;
+  if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="${colspan}">この日の予約はまだありません。</td></tr>`; return; }
+  body.innerHTML = list.map(b => ledgerRow(b)).join("");
 }
 
 function renderLedgerWeek(){
@@ -588,8 +587,9 @@ function renderLedgerWeek(){
                         .sort((a,b)=> a.date.localeCompare(b.date) || toMinutes(a.start)-toMinutes(b.start));
   document.getElementById("ledger-count").textContent = `${list.length} 件`;
   const body = document.getElementById("ledger-body");
-  if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="7">この週の予約はまだありません。</td></tr>`; return; }
-  body.innerHTML = list.map(b => ledgerRow(b, true)).join("");
+  const colspan = currentCategory === "guest" ? 7 : 6;
+  if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="${colspan}">この週の予約はまだありません。</td></tr>`; return; }
+  body.innerHTML = list.map(b => ledgerRow(b)).join("");
 }
 
 // ---------- booking modal ----------
@@ -636,7 +636,6 @@ function openModal(){
   document.getElementById("f-end").value = "";
   document.getElementById("f-purpose").value = "";
   document.getElementById("f-visitor").value = "";
-  document.getElementById("f-empid").value = "";
   document.getElementById("f-empname").value = "";
   hideModalError();
   document.getElementById("overlay").classList.add("show");
@@ -660,7 +659,6 @@ function openEditModal(id){
   document.getElementById("f-start").value = b.start;
   document.getElementById("f-end").value = b.end;
   document.getElementById("f-purpose").value = b.purpose || "";
-  document.getElementById("f-empid").value = b.empId || "";
   document.getElementById("f-empname").value = b.empName || "";
 
   if(b.category === "guest"){
@@ -722,15 +720,14 @@ async function submitBooking(){
   const start = document.getElementById("f-start").value;
   const end = document.getElementById("f-end").value;
   const purpose = document.getElementById("f-purpose").value.trim();
-  const empId = document.getElementById("f-empid").value.trim();
   const empName = document.getElementById("f-empname").value.trim();
 
   if(!date || !start || !end){ showModalError("日付・開始時刻・終了時刻を入力してください。"); return; }
   if(toMinutes(start) >= toMinutes(end)){ showModalError("終了時刻は開始時刻より後にしてください。"); return; }
   if(!purpose){ showModalError("件名・使用目的を入力してください。"); return; }
-  if(!empId || !empName){ showModalError("社員番号と氏名を入力してください。"); return; }
+  if(!empName){ showModalError("氏名を入力してください。"); return; }
 
-  const booking = { category, date, start, end, purpose, empId, empName };
+  const booking = { category, date, start, end, purpose, empName };
 
   if(category === "guest"){
     const visitorName = document.getElementById("f-visitor").value.trim();
@@ -795,7 +792,7 @@ function openCancelModal(id){
   hideCancelModalError();
 
   const catLabel = b.category === "room" ? "会議室" : (b.category === "car" ? "社用車" : "来客");
-  let summary = `${catLabel}「${escapeHtml(b.resource)}」<br>${escapeHtml(b.date)} ${b.start}〜${b.end}<br>件名: ${escapeHtml(b.purpose)}<br>予約者: ${escapeHtml(b.empName)}（${escapeHtml(b.empId)}）`;
+  let summary = `${catLabel}「${escapeHtml(b.resource)}」<br>${escapeHtml(b.date)} ${b.start}〜${b.end}<br>件名: ${escapeHtml(b.purpose)}<br>予約者: ${escapeHtml(b.empName)}`;
   if(b.visitorName) summary += `<br>来客者: ${escapeHtml(b.visitorName)}`;
   if(b.linkedId) summary += `<br><span style="color:var(--hanko-dark)">※ 紐づく会議室予約 / 来客記録も同時に取り消されます</span>`;
   document.getElementById("cancel-summary").innerHTML = summary;
