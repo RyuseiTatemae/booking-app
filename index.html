@@ -279,7 +279,7 @@
       </div>
 
       <div class="field">
-        <label>氏名</label>
+        <label>予約者</label>
         <input type="text" id="f-empname" placeholder="例: 山田 太郎">
       </div>
     </div>
@@ -533,7 +533,7 @@ function ledgerHeaderRow(){
   if(currentCategory === "guest"){
     return `<tr>
       <th style="width:12%">日付</th>
-      <th style="width:15%">氏名</th>
+      <th style="width:15%">予約者</th>
       <th style="width:15%">来客者</th>
       <th style="width:24%">件名 / 使用目的</th>
       <th style="width:14%">会議室</th>
@@ -543,7 +543,7 @@ function ledgerHeaderRow(){
   }
   return `<tr>
     <th style="width:13%">日付</th>
-    <th style="width:18%">氏名</th>
+    <th style="width:18%">予約者</th>
     <th style="width:15%">対象</th>
     <th style="width:24%">件名</th>
     <th style="width:14%">時間</th>
@@ -719,7 +719,12 @@ function closeModal(){
   document.getElementById("f-category").disabled = false;
   editingId = null;
 }
-function showModalError(msg){ const el = document.getElementById("modal-error"); el.textContent = msg; el.classList.add("show"); }
+function showModalError(msg){
+  const el = document.getElementById("modal-error");
+  el.textContent = msg;
+  el.classList.add("show");
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
 function hideModalError(){ document.getElementById("modal-error").classList.remove("show"); }
 
 function hasOverlap(category, resource, date, start, end, excludeId){
@@ -744,7 +749,7 @@ async function submitBooking(){
   if(!date || !start || !end){ showModalError("日付・開始時刻・終了時刻を入力してください。"); return; }
   if(toMinutes(start) >= toMinutes(end)){ showModalError("終了時刻は開始時刻より後にしてください。"); return; }
   if(!purpose){ showModalError("件名・使用目的を入力してください。"); return; }
-  if(!empName){ showModalError("氏名を入力してください。"); return; }
+  if(!empName){ showModalError("予約者を入力してください。"); return; }
 
   const booking = { category, date, start, end, purpose, empName };
 
@@ -819,7 +824,12 @@ function openCancelModal(id){
   document.getElementById("cancel-overlay").classList.add("show");
 }
 function closeCancelModal(){ document.getElementById("cancel-overlay").classList.remove("show"); pendingCancelId = null; }
-function showCancelModalError(msg){ const el = document.getElementById("cancel-modal-error"); el.textContent = msg; el.classList.add("show"); }
+function showCancelModalError(msg){
+  const el = document.getElementById("cancel-modal-error");
+  el.textContent = msg;
+  el.classList.add("show");
+  el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+}
 function hideCancelModalError(){ document.getElementById("cancel-modal-error").classList.remove("show"); }
 
 async function confirmCancel(){
@@ -870,4 +880,5 @@ function showToast(msg, isErr){
   }, 15000);
 })();
 </script>
+
 
