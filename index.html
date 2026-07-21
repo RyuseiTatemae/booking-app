@@ -155,6 +155,10 @@
   .field-row{display:flex;gap:10px;}
   .field-row .field{flex:1;}
   .check-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;}
+  .weekday-picker{display:flex;gap:6px;flex-wrap:wrap;}
+  .wd-pill{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:12.5px;cursor:pointer;background:#FAF9F5;user-select:none;}
+  .wd-pill input{width:auto;margin:0;accent-color:var(--brand-green);}
+  .wd-pill:has(input:checked){background:var(--brand-green-soft);border-color:var(--brand-green);color:var(--brand-green-dark);font-weight:600;}
   .check-row input{width:auto;}
   .error-msg{background:rgba(179,57,44,0.08);color:var(--hanko-dark);border:1px solid rgba(179,57,44,0.3);border-radius:16px;padding:9px 14px;font-size:12.5px;display:none;line-height:1.5;}
   .error-msg.show{display:block;}
@@ -166,9 +170,9 @@
   .btn-danger{background:var(--hanko);border:none;color:#fff;padding:9px 20px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans JP',sans-serif;}
   .btn-danger:hover{background:var(--hanko-dark);}
 
-  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 24px;border-radius:999px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:100;display:flex;align-items:center;gap:8px;}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:11px 24px;border-radius:20px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,0.25);opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;z-index:100;display:flex;align-items:center;gap:8px;max-width:min(90vw,560px);line-height:1.5;}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-  .toast .dot{width:7px;height:7px;border-radius:50%;background:var(--stamp-green);}
+  .toast .dot{width:7px;height:7px;border-radius:50%;background:var(--stamp-green);flex-shrink:0;margin-top:1px;}
   .toast.err .dot{background:var(--hanko);}
 
   .loading{padding:60px;text-align:center;color:var(--muted);font-size:13px;}
@@ -257,13 +261,86 @@
         <input type="date" id="f-date">
       </div>
       <div class="field-row">
-        <div class="field"><label>開始時刻</label><input type="time" id="f-start" step="900"></div>
-        <div class="field"><label>終了時刻</label><input type="time" id="f-end" step="900"></div>
+        <div class="field"><label>開始時刻</label><input type="time" id="f-start" step="600"></div>
+        <div class="field"><label>終了時刻</label><input type="time" id="f-end" step="600"></div>
       </div>
 
       <div class="field">
         <label>件名 / 使用目的</label>
         <input type="text" id="f-purpose" placeholder="例: 定例MTG、〇〇商事様訪問 など">
+      </div>
+
+      <div id="field-recurring-wrap">
+        <div class="check-row">
+          <input type="checkbox" id="f-recurring-check" onchange="toggleRecurring()">
+          <label for="f-recurring-check" style="margin:0;font-weight:600;color:var(--ink);">繰り返し予約にする</label>
+        </div>
+        <div id="field-recurring-options-wrap" style="display:none;margin-top:8px;">
+          <div class="field">
+            <label>繰り返しの種類</label>
+            <select id="f-recurring-type" onchange="onRecurringTypeChange()">
+              <option value="weekly">毎週</option>
+              <option value="monthly">毎月</option>
+            </select>
+          </div>
+
+          <div class="field" id="field-recurring-weekdays-wrap">
+            <label>曜日(複数選択可)</label>
+            <div class="weekday-picker" id="f-recurring-weekdays">
+              <label class="wd-pill"><input type="checkbox" value="0">日</label>
+              <label class="wd-pill"><input type="checkbox" value="1">月</label>
+              <label class="wd-pill"><input type="checkbox" value="2">火</label>
+              <label class="wd-pill"><input type="checkbox" value="3">水</label>
+              <label class="wd-pill"><input type="checkbox" value="4">木</label>
+              <label class="wd-pill"><input type="checkbox" value="5">金</label>
+              <label class="wd-pill"><input type="checkbox" value="6">土</label>
+            </div>
+          </div>
+
+          <div id="field-recurring-monthly-wrap" style="display:none">
+            <div class="field">
+              <label>毎月のパターン</label>
+              <select id="f-recurring-monthly-mode" onchange="onMonthlyModeChange()">
+                <option value="dayOfMonth">日付を指定（毎月◯日）</option>
+                <option value="nthWeekday">曜日を指定（第◯ 何曜日）</option>
+              </select>
+            </div>
+            <div class="field" id="field-recurring-dayofmonth-wrap" style="margin-top:8px;">
+              <label>毎月</label>
+              <input type="number" id="f-recurring-dayofmonth" min="1" max="31">
+            </div>
+            <div class="field-row" id="field-recurring-nthweekday-wrap" style="display:none;margin-top:8px;">
+              <div class="field">
+                <label>週</label>
+                <select id="f-recurring-nth">
+                  <option value="1">第1</option>
+                  <option value="2">第2</option>
+                  <option value="3">第3</option>
+                  <option value="4">第4</option>
+                  <option value="5">第5</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>曜日</label>
+                <select id="f-recurring-nth-weekday">
+                  <option value="0">日曜日</option>
+                  <option value="1">月曜日</option>
+                  <option value="2">火曜日</option>
+                  <option value="3">水曜日</option>
+                  <option value="4">木曜日</option>
+                  <option value="5">金曜日</option>
+                  <option value="6">土曜日</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-top:8px;">
+            <label>繰り返し終了日</label>
+            <input type="date" id="f-recurring-until">
+          </div>
+        </div>
+        <div class="info-box" id="field-recurring-info" style="display:none;margin-top:6px;">起点の日時・時間はそのままで、指定した条件で終了日まで繰り返し登録します。時間が被っている回・該当日がない回は自動でスキップされ、あとでどの回がスキップされたかお知らせします（一度に登録できるのは最大60件です）。</div>
       </div>
 
       <div id="field-linkroom-wrap" style="display:none">
@@ -309,7 +386,7 @@
 <div class="toast" id="toast"><span class="dot"></span><span id="toast-text"></span></div>
 
 <script>
-const ROOMS = ["大会議室","小会議室","ミーティングルームA","ミーティングルームB"];
+const ROOMS = ["大会議室","小会議室","ミーティングルームA","ミーティングルームB","応接室"];
 const CARS  = ["プリウス","ハイエース","プロボックス","軽トラ","軽バン"];
 const GUEST_RESOURCE = "来客";
 const DAY_START = 8;
@@ -641,6 +718,104 @@ function toggleLinkRoom(){
   const checked = document.getElementById("f-linkroom-check").checked;
   document.getElementById("field-linkroom-select-wrap").style.display = checked ? "" : "none";
 }
+function toggleRecurring(){
+  const checked = document.getElementById("f-recurring-check").checked;
+  document.getElementById("field-recurring-options-wrap").style.display = checked ? "" : "none";
+  document.getElementById("field-recurring-info").style.display = checked ? "" : "none";
+  if(checked){
+    const baseDate = document.getElementById("f-date").value || currentDate;
+    const d = new Date(baseDate + "T00:00:00");
+    // 起点日の曜日をデフォルトでチェック
+    document.querySelectorAll('#f-recurring-weekdays input').forEach(el=>{
+      el.checked = (parseInt(el.value,10) === d.getDay());
+    });
+    document.getElementById("f-recurring-dayofmonth").value = d.getDate();
+    document.getElementById("f-recurring-nth-weekday").value = String(d.getDay());
+    document.getElementById("f-recurring-nth").value = String(Math.ceil(d.getDate()/7));
+    if(!document.getElementById("f-recurring-until").value){
+      document.getElementById("f-recurring-until").value = addDays(baseDate, 56); // 既定で約2ヶ月先
+    }
+    document.getElementById("f-recurring-type").value = "weekly";
+    onRecurringTypeChange();
+  }
+}
+function onRecurringTypeChange(){
+  const type = document.getElementById("f-recurring-type").value;
+  document.getElementById("field-recurring-weekdays-wrap").style.display = type === "weekly" ? "" : "none";
+  document.getElementById("field-recurring-monthly-wrap").style.display = type === "monthly" ? "" : "none";
+  if(type === "monthly") onMonthlyModeChange();
+}
+function onMonthlyModeChange(){
+  const mode = document.getElementById("f-recurring-monthly-mode").value;
+  document.getElementById("field-recurring-dayofmonth-wrap").style.display = mode === "dayOfMonth" ? "" : "none";
+  document.getElementById("field-recurring-nthweekday-wrap").style.display = mode === "nthWeekday" ? "" : "none";
+}
+
+// 指定した年月(0始まり月)の「第nth 曜日weekday」の日付を返す。存在しなければnull
+function nthWeekdayOfMonth(year, monthIndex, nth, weekday){
+  const first = new Date(year, monthIndex, 1);
+  const firstWeekday = first.getDay();
+  const offset = (weekday - firstWeekday + 7) % 7;
+  const day = 1 + offset + (nth - 1) * 7;
+  const lastDay = new Date(year, monthIndex + 1, 0).getDate();
+  if(day > lastDay) return null;
+  return formatLocalDate(new Date(year, monthIndex, day));
+}
+
+// 繰り返し条件から対象日リストを生成する
+async function generateRecurringDates(baseDate){
+  const until = document.getElementById("f-recurring-until").value;
+  if(!until) return { error: "繰り返し終了日を入力してください。" };
+  if(until < baseDate) return { error: "繰り返し終了日は開始日以降にしてください。" };
+
+  const MAX_OCCURRENCES = 60;
+  const type = document.getElementById("f-recurring-type").value;
+  const dates = [];
+  const skipped = [];
+
+  if(type === "weekly"){
+    const weekdays = Array.from(document.querySelectorAll('#f-recurring-weekdays input:checked')).map(el => parseInt(el.value, 10));
+    if(weekdays.length === 0) return { error: "繰り返す曜日を1つ以上選んでください。" };
+    let cursor = baseDate;
+    let guard = 0;
+    while(cursor <= until && dates.length < MAX_OCCURRENCES && guard < 1000){
+      const d = new Date(cursor + "T00:00:00");
+      if(weekdays.includes(d.getDay())) dates.push(cursor);
+      cursor = addDays(cursor, 1);
+      guard++;
+    }
+  } else {
+    const mode = document.getElementById("f-recurring-monthly-mode").value;
+    const start = new Date(baseDate + "T00:00:00");
+    const baseY = start.getFullYear(), baseM = start.getMonth();
+    for(let i = 0; i < 240 && dates.length < MAX_OCCURRENCES; i++){
+      const ty = baseY + Math.floor((baseM + i) / 12);
+      const tm = (baseM + i) % 12;
+      const monthStart = formatLocalDate(new Date(ty, tm, 1));
+      if(monthStart > until) break;
+
+      let occ = null;
+      if(mode === "dayOfMonth"){
+        const day = parseInt(document.getElementById("f-recurring-dayofmonth").value, 10);
+        const lastDay = new Date(ty, tm + 1, 0).getDate();
+        if(day >= 1 && day <= lastDay){
+          occ = formatLocalDate(new Date(ty, tm, day));
+        } else {
+          skipped.push(`${ty}/${tm+1}（該当日なし）`);
+        }
+      } else {
+        const nth = parseInt(document.getElementById("f-recurring-nth").value, 10);
+        const wd = parseInt(document.getElementById("f-recurring-nth-weekday").value, 10);
+        occ = nthWeekdayOfMonth(ty, tm, nth, wd);
+        if(!occ) skipped.push(`${ty}/${tm+1}（該当日なし）`);
+      }
+      if(occ && occ >= baseDate && occ <= until) dates.push(occ);
+    }
+  }
+
+  if(dates.length === 0) return { error: "条件に合う日付がありませんでした。終了日や曜日の指定を見直してください。" };
+  return { dates, skipped };
+}
 
 function openModal(){
   editingId = null;
@@ -656,6 +831,14 @@ function openModal(){
   document.getElementById("f-purpose").value = "";
   document.getElementById("f-visitor").value = "";
   document.getElementById("f-empname").value = "";
+  document.getElementById("field-recurring-wrap").style.display = "";
+  document.getElementById("f-recurring-check").checked = false;
+  document.getElementById("f-recurring-type").value = "weekly";
+  document.getElementById("f-recurring-monthly-mode").value = "dayOfMonth";
+  document.getElementById("f-recurring-until").value = "";
+  onRecurringTypeChange();
+  onMonthlyModeChange();
+  toggleRecurring();
   hideModalError();
   document.getElementById("overlay").classList.add("show");
 }
@@ -679,6 +862,9 @@ function openEditModal(id){
   document.getElementById("f-end").value = b.end;
   document.getElementById("f-purpose").value = b.purpose || "";
   document.getElementById("f-empname").value = b.empName || "";
+  document.getElementById("field-recurring-wrap").style.display = "none";
+  document.getElementById("f-recurring-check").checked = false;
+  toggleRecurring();
 
   if(b.category === "guest"){
     document.getElementById("f-visitor").value = b.visitorName || "";
@@ -779,7 +965,57 @@ async function submitBooking(){
     }
   }
 
+  const isRecurring = !editingId && document.getElementById("f-recurring-check").checked;
+
   const submitBtn = document.querySelector("#overlay .btn-primary");
+
+  if(isRecurring){
+    submitBtn.disabled = true; submitBtn.textContent = "送信中…";
+    const gen = await generateRecurringDates(date);
+    if(gen.error){
+      submitBtn.disabled = false; submitBtn.textContent = "予約を確定する";
+      showModalError(gen.error);
+      return;
+    }
+    const dates = gen.dates;
+    const monthSkipped = gen.skipped || [];
+
+    const results = [];
+    for(let i=0;i<dates.length;i++){
+      submitBtn.textContent = `送信中…（${i+1}/${dates.length}）`;
+      const occBooking = Object.assign({}, booking, { date: dates[i] });
+      try{
+        const r = await addBookingRemote(occBooking);
+        results.push({ date: dates[i], success: !!r.success, error: r.error });
+      }catch(e){
+        results.push({ date: dates[i], success: false, error: "通信エラー" });
+      }
+    }
+    submitBtn.disabled = false; submitBtn.textContent = "予約を確定する";
+
+    const failList = results.filter(r => !r.success);
+    const successCount = results.length - failList.length;
+
+    await loadBookings();
+    closeModal();
+    currentCategory = category;
+    document.querySelectorAll(".tab-btn").forEach(b => b.classList.toggle("active", b.dataset.cat === category));
+    currentDate = date;
+    document.getElementById("date-input").value = date;
+    render();
+
+    const noteParts = [];
+    if(failList.length > 0) noteParts.push(`重複のためスキップ: ${failList.map(f=>f.date).join("、")}`);
+    if(monthSkipped.length > 0) noteParts.push(`該当日なしでスキップ: ${monthSkipped.join("、")}`);
+
+    if(noteParts.length === 0){
+      showToast(`繰り返し予約を${results.length}件登録しました（${empName} / ${start}〜${end}）`, false, 4500);
+    } else {
+      showToast(`${successCount}/${results.length}件登録しました。${noteParts.join(" / ")}`, true, 8000);
+    }
+    return;
+  }
+
   submitBtn.disabled = true; submitBtn.textContent = "送信中…";
   let result;
   try{
@@ -861,13 +1097,13 @@ async function confirmCancel(){
 
 // ---------- toast ----------
 let toastTimer = null;
-function showToast(msg, isErr){
+function showToast(msg, isErr, durationMs){
   const t = document.getElementById("toast");
   document.getElementById("toast-text").textContent = msg;
   t.classList.toggle("err", !!isErr);
   t.classList.add("show");
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=> t.classList.remove("show"), 3200);
+  toastTimer = setTimeout(()=> t.classList.remove("show"), durationMs || 3200);
 }
 
 // ---------- init ----------
@@ -880,5 +1116,6 @@ function showToast(msg, isErr){
   }, 15000);
 })();
 </script>
+
 
 
