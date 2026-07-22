@@ -440,16 +440,24 @@ function getTimeValue(prefix){
   return `${h}:${m}`;
 }
 function setTimeValue(prefix, hhmm){
+  const hSel = document.getElementById(`${prefix}-h`);
+  const mSel = document.getElementById(`${prefix}-m`);
   if(!hhmm){
-    document.getElementById(`${prefix}-h`).selectedIndex = 0;
-    document.getElementById(`${prefix}-m`).selectedIndex = 0;
+    hSel.selectedIndex = 0;
+    mSel.selectedIndex = 0;
     return;
   }
-  const [h, m] = hhmm.split(":");
+  const parts = String(hhmm).trim().split(":");
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if(isNaN(h) || isNaN(m)){
+    hSel.selectedIndex = 0;
+    mSel.selectedIndex = 0;
+    return;
+  }
   // 10分刻みでない値(例: 過去に15分刻みで登録された予約)は直近の10分単位に切り捨てて表示
-  const roundedM = pad(Math.floor(parseInt(m,10)/10)*10);
-  document.getElementById(`${prefix}-h`).value = h;
-  document.getElementById(`${prefix}-m`).value = roundedM;
+  hSel.value = pad(((h % 24) + 24) % 24);
+  mSel.value = pad(Math.floor(m / 10) * 10 % 60);
 }
 function toMinutes(t){ const [h,m] = t.split(":").map(Number); return h*60+m; }
 function resourceList(cat){ return cat === "room" ? ROOMS : (cat === "car" ? CARS : [GUEST_RESOURCE]); }
@@ -1159,7 +1167,3 @@ function showToast(msg, isErr, durationMs){
   }, 15000);
 })();
 </script>
-
-
-
-
