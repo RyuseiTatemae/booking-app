@@ -153,6 +153,9 @@
   .field input, .field select{width:100%;padding:9px 14px;border:1px solid var(--line);border-radius:14px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:#FAF9F5;}
   .field input:focus, .field select:focus{outline:2px solid var(--brand-green);outline-offset:1px;background:#fff;}
   .field-row{display:flex;gap:10px;}
+  .time-select-row{display:flex;align-items:center;gap:6px;}
+  .time-select-row select{width:auto;flex:1;text-align:center;}
+  .time-select-row span{color:var(--muted);font-weight:600;}
   .field-row .field{flex:1;}
   .check-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 0;}
   .weekday-picker{display:flex;gap:6px;flex-wrap:wrap;}
@@ -261,8 +264,18 @@
         <input type="date" id="f-date">
       </div>
       <div class="field-row">
-        <div class="field"><label>開始時刻</label><input type="time" id="f-start" step="600"></div>
-        <div class="field"><label>終了時刻</label><input type="time" id="f-end" step="600"></div>
+        <div class="field">
+          <label>開始時刻</label>
+          <div class="time-select-row">
+            <select id="f-start-h"></select><span>:</span><select id="f-start-m"></select>
+          </div>
+        </div>
+        <div class="field">
+          <label>終了時刻</label>
+          <div class="time-select-row">
+            <select id="f-end-h"></select><span>:</span><select id="f-end-m"></select>
+          </div>
+        </div>
       </div>
 
       <div class="field">
@@ -409,6 +422,35 @@ function formatLocalDate(d){
 }
 function todayStr(){ return formatLocalDate(new Date()); }
 function pad(n){ return String(n).padStart(2,"0"); }
+
+// ---------- 時刻プルダウン(10分刻み) ----------
+function populateTimeSelects(){
+  const hourOptions = [];
+  for(let h=0; h<24; h++) hourOptions.push(`<option value="${pad(h)}">${pad(h)}</option>`);
+  const minuteOptions = [];
+  for(let m=0; m<60; m+=10) minuteOptions.push(`<option value="${pad(m)}">${pad(m)}</option>`);
+  ["f-start","f-end"].forEach(prefix=>{
+    document.getElementById(`${prefix}-h`).innerHTML = hourOptions.join("");
+    document.getElementById(`${prefix}-m`).innerHTML = minuteOptions.join("");
+  });
+}
+function getTimeValue(prefix){
+  const h = document.getElementById(`${prefix}-h`).value;
+  const m = document.getElementById(`${prefix}-m`).value;
+  return `${h}:${m}`;
+}
+function setTimeValue(prefix, hhmm){
+  if(!hhmm){
+    document.getElementById(`${prefix}-h`).selectedIndex = 0;
+    document.getElementById(`${prefix}-m`).selectedIndex = 0;
+    return;
+  }
+  const [h, m] = hhmm.split(":");
+  // 10分刻みでない値(例: 過去に15分刻みで登録された予約)は直近の10分単位に切り捨てて表示
+  const roundedM = pad(Math.floor(parseInt(m,10)/10)*10);
+  document.getElementById(`${prefix}-h`).value = h;
+  document.getElementById(`${prefix}-m`).value = roundedM;
+}
 function toMinutes(t){ const [h,m] = t.split(":").map(Number); return h*60+m; }
 function resourceList(cat){ return cat === "room" ? ROOMS : (cat === "car" ? CARS : [GUEST_RESOURCE]); }
 function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
@@ -826,8 +868,8 @@ function openModal(){
   document.getElementById("f-category").value = currentCategory;
   applyCategoryFieldVisibility(currentCategory);
   document.getElementById("f-date").value = currentDate;
-  document.getElementById("f-start").value = "";
-  document.getElementById("f-end").value = "";
+  setTimeValue("f-start", "");
+  setTimeValue("f-end", "");
   document.getElementById("f-purpose").value = "";
   document.getElementById("f-visitor").value = "";
   document.getElementById("f-empname").value = "";
@@ -858,8 +900,8 @@ function openEditModal(id){
   applyCategoryFieldVisibility(b.category);
 
   document.getElementById("f-date").value = b.date;
-  document.getElementById("f-start").value = b.start;
-  document.getElementById("f-end").value = b.end;
+  setTimeValue("f-start", b.start);
+  setTimeValue("f-end", b.end);
   document.getElementById("f-purpose").value = b.purpose || "";
   document.getElementById("f-empname").value = b.empName || "";
   document.getElementById("field-recurring-wrap").style.display = "none";
@@ -927,8 +969,8 @@ function hasOverlap(category, resource, date, start, end, excludeId){
 async function submitBooking(){
   const category = document.getElementById("f-category").value;
   const date = document.getElementById("f-date").value;
-  const start = document.getElementById("f-start").value;
-  const end = document.getElementById("f-end").value;
+  const start = getTimeValue("f-start");
+  const end = getTimeValue("f-end");
   const purpose = document.getElementById("f-purpose").value.trim();
   const empName = document.getElementById("f-empname").value.trim();
 
@@ -1108,6 +1150,7 @@ function showToast(msg, isErr, durationMs){
 
 // ---------- init ----------
 (async function init(){
+  populateTimeSelects();
   document.getElementById("date-input").value = currentDate;
   await loadBookings();
   render();
@@ -1116,6 +1159,7 @@ function showToast(msg, isErr, durationMs){
   }, 15000);
 })();
 </script>
+
 
 
 
