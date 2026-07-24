@@ -76,7 +76,9 @@
   .datebar button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;}
   .datebar button:hover{background:var(--paper);}
   .datebar input[type=date]{font-family:'JetBrains Mono', monospace;font-size:14px;border:1px solid var(--line);border-radius:14px;padding:6px 12px;background:#fff;color:var(--ink);}
-  .datebar .range-label{font-size:13px;color:var(--muted);margin-left:auto;font-weight:600;}
+  .date-weekday{font-size:14px;color:var(--ink);font-weight:600;}
+  .date-input-row{display:flex;align-items:center;gap:10px;}
+  .date-input-row input{flex:1;}
   .datebar .today-btn{width:auto;padding:0 12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;}
 
   /* ---- Day board ---- */
@@ -150,8 +152,9 @@
   .modal-head button{background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);}
   .modal-body{padding:18px 22px;display:flex;flex-direction:column;gap:14px;}
   .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:5px;font-weight:600;}
-  .field input, .field select{width:100%;padding:9px 14px;border:1px solid var(--line);border-radius:14px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:#FAF9F5;}
-  .field input:focus, .field select:focus{outline:2px solid var(--brand-green);outline-offset:1px;background:#fff;}
+  .field input, .field select, .field textarea{width:100%;padding:9px 14px;border:1px solid var(--line);border-radius:14px;font-size:14px;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:#FAF9F5;}
+  .field textarea{resize:vertical;line-height:1.5;}
+  .field input:focus, .field select:focus, .field textarea:focus{outline:2px solid var(--brand-green);outline-offset:1px;background:#fff;}
   .field-row{display:flex;gap:10px;}
   .time-select-row{display:flex;align-items:center;gap:6px;}
   .time-select-row select{width:auto;flex:1;text-align:center;}
@@ -209,9 +212,9 @@
     <div class="datebar">
       <button onclick="shiftDate(-1)" aria-label="前へ">‹</button>
       <input type="date" id="date-input" onchange="onDateChange()">
+      <span class="date-weekday" id="date-weekday-label"></span>
       <button onclick="shiftDate(1)" aria-label="次へ">›</button>
       <button class="today-btn" onclick="goToday()">今日</button>
-      <span class="range-label" id="range-label"></span>
     </div>
 
     <div id="board" class="board"><div class="loading">読み込み中…</div></div>
@@ -261,7 +264,10 @@
 
       <div class="field">
         <label>日付</label>
-        <input type="date" id="f-date">
+        <div class="date-input-row">
+          <input type="date" id="f-date" onchange="updateFDateWeekday()">
+          <span class="date-weekday" id="f-date-weekday"></span>
+        </div>
       </div>
       <div class="field-row">
         <div class="field">
@@ -279,8 +285,13 @@
       </div>
 
       <div class="field">
-        <label>件名 / 使用目的</label>
+        <label>件名</label>
         <input type="text" id="f-purpose" placeholder="例: 定例MTG、〇〇商事様訪問 など">
+      </div>
+
+      <div class="field">
+        <label>メモ（任意）</label>
+        <textarea id="f-memo" rows="2" placeholder="補足事項があれば入力してください"></textarea>
       </div>
 
       <div id="field-recurring-wrap">
@@ -464,11 +475,21 @@ function resourceList(cat){ return cat === "room" ? ROOMS : (cat === "car" ? CAR
 function escapeHtml(s){ return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
 
 // ---------- backend ----------
+function padTime(t){
+  if(!t) return t;
+  const parts = String(t).trim().split(":");
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if(isNaN(h) || isNaN(m)) return t;
+  return `${pad(h)}:${pad(m)}`;
+}
+
 async function loadBookings(){
   try{
     const res = await fetch(CONFIG.API_URL, { method: "GET" });
     const data = await res.json();
     bookings = data.success ? data.bookings : [];
+    bookings.forEach(b => { b.start = padTime(b.start); b.end = padTime(b.end); });
   }catch(e){
     console.error(e);
     showToast("予約データの取得に失敗しました。通信状況を確認してください。", true);
@@ -504,6 +525,15 @@ function weekdayLabel(dateStr){
   const wd = ["日","月","火","水","木","金","土"];
   const d = new Date(dateStr + "T00:00:00");
   return `${d.getMonth()+1}月${d.getDate()}日（${wd[d.getDay()]}）`;
+}
+function weekdayShort(dateStr){
+  const wd = ["日","月","火","水","木","金","土"];
+  const d = new Date(dateStr + "T00:00:00");
+  return `（${wd[d.getDay()]}）`;
+}
+function updateFDateWeekday(){
+  const v = document.getElementById("f-date").value;
+  document.getElementById("f-date-weekday").textContent = v ? weekdayShort(v) : "";
 }
 function getWeekStart(dateStr){
   const d = new Date(dateStr + "T00:00:00");
@@ -551,14 +581,11 @@ function onDateChange(){
 }
 
 function render(){
+  document.getElementById("date-weekday-label").textContent = weekdayShort(currentDate);
   if(currentViewMode === "day"){
-    document.getElementById("range-label").textContent = weekdayLabel(currentDate);
     renderDayBoard();
     renderLedgerDay();
   } else {
-    const weekStart = getWeekStart(currentDate);
-    const weekEnd = addDays(weekStart, 6);
-    document.getElementById("range-label").textContent = `${weekdayLabel(weekStart)} 〜 ${weekdayLabel(weekEnd)}`;
     renderWeekBoard();
     renderLedgerWeek();
   }
@@ -656,20 +683,21 @@ function renderWeekBoard(){
 }
 
 // ---------- ledger ----------
-function ledgerHeaderRow(){
+function ledgerHeaderRow(showDate){
+  const dateTh = showDate ? `<th style="width:12%">日付</th>` : '';
   if(currentCategory === "guest"){
     return `<tr>
-      <th style="width:12%">日付</th>
+      ${dateTh}
       <th style="width:15%">予約者</th>
       <th style="width:15%">来客者</th>
-      <th style="width:24%">件名 / 使用目的</th>
+      <th style="width:24%">件名</th>
       <th style="width:14%">会議室</th>
       <th style="width:12%">時間</th>
       <th style="width:14%"></th>
     </tr>`;
   }
   return `<tr>
-    <th style="width:13%">日付</th>
+    ${dateTh}
     <th style="width:18%">予約者</th>
     <th style="width:15%">対象</th>
     <th style="width:24%">件名</th>
@@ -679,13 +707,13 @@ function ledgerHeaderRow(){
 }
 function findById(id){ return bookings.find(x => x.id === id); }
 
-function ledgerRow(b){
-  const dateCell = escapeHtml(b.date);
+function ledgerRow(b, showDate){
+  const dateCell = showDate ? `<td>${escapeHtml(b.date)}</td>` : '';
   if(b.category === "guest"){
     const linkedRoom = b.linkedId ? findById(b.linkedId) : null;
     const roomCell = linkedRoom ? `<span class="badge">${escapeHtml(linkedRoom.resource)}</span>` : `<span style="color:var(--muted)">－</span>`;
     return `<tr>
-      <td>${dateCell}</td>
+      ${dateCell}
       <td class="who-cell">${escapeHtml(b.empName)}</td>
       <td>${escapeHtml(b.visitorName)}</td>
       <td>${escapeHtml(b.purpose)}</td>
@@ -698,7 +726,7 @@ function ledgerRow(b){
     </tr>`;
   }
   return `<tr>
-    <td>${dateCell}</td>
+    ${dateCell}
     <td class="who-cell">${escapeHtml(b.empName)}</td>
     <td><span class="badge${currentCategory==='car'?' car':''}">${escapeHtml(b.resource)}</span></td>
     <td>${escapeHtml(b.purpose)}</td>
@@ -711,20 +739,20 @@ function ledgerRow(b){
 }
 
 function renderLedgerDay(){
-  document.getElementById("ledger-thead").innerHTML = ledgerHeaderRow();
+  document.getElementById("ledger-thead").innerHTML = ledgerHeaderRow(false);
   const catLabel = currentCategory === "room" ? "会議室" : (currentCategory === "car" ? "社用車" : "来客");
   document.getElementById("ledger-title-text").textContent = `${weekdayLabel(currentDate)}の予約一覧（${catLabel}）`;
   const list = bookings.filter(b => b.category === currentCategory && b.date === currentDate)
                         .sort((a,b)=> a.empName.localeCompare(b.empName,'ja') || toMinutes(a.start)-toMinutes(b.start));
   document.getElementById("ledger-count").textContent = `${list.length} 件`;
   const body = document.getElementById("ledger-body");
-  const colspan = currentCategory === "guest" ? 7 : 6;
+  const colspan = currentCategory === "guest" ? 6 : 5;
   if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="${colspan}">この日の予約はまだありません。</td></tr>`; return; }
-  body.innerHTML = list.map(b => ledgerRow(b)).join("");
+  body.innerHTML = list.map(b => ledgerRow(b, false)).join("");
 }
 
 function renderLedgerWeek(){
-  document.getElementById("ledger-thead").innerHTML = ledgerHeaderRow();
+  document.getElementById("ledger-thead").innerHTML = ledgerHeaderRow(true);
   const catLabel = currentCategory === "room" ? "会議室" : (currentCategory === "car" ? "社用車" : "来客");
   const weekStart = getWeekStart(currentDate);
   const weekEnd = addDays(weekStart, 6);
@@ -735,7 +763,7 @@ function renderLedgerWeek(){
   const body = document.getElementById("ledger-body");
   const colspan = currentCategory === "guest" ? 7 : 6;
   if(list.length === 0){ body.innerHTML = `<tr class="empty-row"><td colspan="${colspan}">この週の予約はまだありません。</td></tr>`; return; }
-  body.innerHTML = list.map(b => ledgerRow(b)).join("");
+  body.innerHTML = list.map(b => ledgerRow(b, true)).join("");
 }
 
 // ---------- booking modal ----------
@@ -876,9 +904,11 @@ function openModal(){
   document.getElementById("f-category").value = currentCategory;
   applyCategoryFieldVisibility(currentCategory);
   document.getElementById("f-date").value = currentDate;
+  updateFDateWeekday();
   setTimeValue("f-start", "");
   setTimeValue("f-end", "");
   document.getElementById("f-purpose").value = "";
+  document.getElementById("f-memo").value = "";
   document.getElementById("f-visitor").value = "";
   document.getElementById("f-empname").value = "";
   document.getElementById("field-recurring-wrap").style.display = "";
@@ -908,9 +938,11 @@ function openEditModal(id){
   applyCategoryFieldVisibility(b.category);
 
   document.getElementById("f-date").value = b.date;
+  updateFDateWeekday();
   setTimeValue("f-start", b.start);
   setTimeValue("f-end", b.end);
   document.getElementById("f-purpose").value = b.purpose || "";
+  document.getElementById("f-memo").value = b.memo || "";
   document.getElementById("f-empname").value = b.empName || "";
   document.getElementById("field-recurring-wrap").style.display = "none";
   document.getElementById("f-recurring-check").checked = false;
@@ -948,6 +980,7 @@ function quickAdd(resource){
 function quickAddOnDate(resource, date){
   openModal();
   document.getElementById("f-date").value = date;
+  updateFDateWeekday();
   if(currentCategory !== "guest") document.getElementById("f-resource").value = resource;
 }
 function closeModal(){
@@ -980,14 +1013,15 @@ async function submitBooking(){
   const start = getTimeValue("f-start");
   const end = getTimeValue("f-end");
   const purpose = document.getElementById("f-purpose").value.trim();
+  const memo = document.getElementById("f-memo").value.trim();
   const empName = document.getElementById("f-empname").value.trim();
 
   if(!date || !start || !end){ showModalError("日付・開始時刻・終了時刻を入力してください。"); return; }
   if(toMinutes(start) >= toMinutes(end)){ showModalError("終了時刻は開始時刻より後にしてください。"); return; }
-  if(!purpose){ showModalError("件名・使用目的を入力してください。"); return; }
+  if(!purpose){ showModalError("件名を入力してください。"); return; }
   if(!empName){ showModalError("予約者を入力してください。"); return; }
 
-  const booking = { category, date, start, end, purpose, empName };
+  const booking = { category, date, start, end, purpose, empName, memo };
 
   if(category === "guest"){
     const visitorName = document.getElementById("f-visitor").value.trim();
@@ -1104,6 +1138,7 @@ function openCancelModal(id){
   const catLabel = b.category === "room" ? "会議室" : (b.category === "car" ? "社用車" : "来客");
   let summary = `${catLabel}「${escapeHtml(b.resource)}」<br>${escapeHtml(b.date)} ${b.start}〜${b.end}<br>件名: ${escapeHtml(b.purpose)}<br>予約者: ${escapeHtml(b.empName)}`;
   if(b.visitorName) summary += `<br>来客者: ${escapeHtml(b.visitorName)}`;
+  if(b.memo) summary += `<br>メモ: ${escapeHtml(b.memo)}`;
   if(b.linkedId) summary += `<br><span style="color:var(--hanko-dark)">※ 紐づく会議室予約 / 来客記録も同時に取り消されます</span>`;
   document.getElementById("cancel-summary").innerHTML = summary;
 
