@@ -687,7 +687,7 @@ function renderWeekBoard(){
 
 // ---------- ledger ----------
 function ledgerHeaderRow(showDate){
-  const dateTh = showDate ? `<th style="width:12%">日付</th>` : '';
+  const dateTh = showDate ? `<th style="width:15%">日付</th>` : '';
   if(currentCategory === "guest"){
     return `<tr>
       ${dateTh}
@@ -711,7 +711,7 @@ function ledgerHeaderRow(showDate){
 function findById(id){ return bookings.find(x => x.id === id); }
 
 function ledgerRow(b, showDate){
-  const dateCell = showDate ? `<td>${escapeHtml(b.date)}</td>` : '';
+  const dateCell = showDate ? `<td>${escapeHtml(b.date)}${weekdayShort(b.date)}</td>` : '';
   if(b.category === "guest"){
     const linkedRoom = b.linkedId ? findById(b.linkedId) : null;
     const roomCell = linkedRoom ? `<span class="badge">${escapeHtml(linkedRoom.resource)}</span>` : `<span style="color:var(--muted)">－</span>`;
