@@ -75,8 +75,9 @@
   }
   .datebar button{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;width:32px;height:32px;cursor:pointer;font-size:15px;}
   .datebar button:hover{background:var(--paper);}
-  .datebar input[type=date]{font-family:'JetBrains Mono', monospace;font-size:14px;border:1px solid var(--line);border-radius:14px;padding:6px 12px;background:#fff;color:var(--ink);}
-  .date-weekday{font-size:14px;color:var(--ink);font-weight:600;}
+  .date-box{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:14px;padding:6px 12px;background:#fff;}
+  .date-box input[type=date]{font-family:'JetBrains Mono', monospace;font-size:14px;border:none;background:transparent;padding:0;color:var(--ink);}
+  .date-weekday{font-size:13px;color:var(--muted);font-weight:600;white-space:nowrap;}
   .date-input-row{display:flex;align-items:center;gap:10px;}
   .date-input-row input{flex:1;}
   .datebar .today-btn{width:auto;padding:0 12px;font-size:12px;font-family:'Noto Sans JP',sans-serif;}
@@ -211,8 +212,10 @@
 
     <div class="datebar">
       <button onclick="shiftDate(-1)" aria-label="前へ">‹</button>
-      <input type="date" id="date-input" onchange="onDateChange()">
-      <span class="date-weekday" id="date-weekday-label"></span>
+      <div class="date-box">
+        <input type="date" id="date-input" onchange="onDateChange()">
+        <span class="date-weekday" id="date-weekday-label"></span>
+      </div>
       <button onclick="shiftDate(1)" aria-label="次へ">›</button>
       <button class="today-btn" onclick="goToday()">今日</button>
     </div>
@@ -264,8 +267,8 @@
 
       <div class="field">
         <label>日付</label>
-        <div class="date-input-row">
-          <input type="date" id="f-date" onchange="updateFDateWeekday()">
+        <div class="date-box" style="width:100%;">
+          <input type="date" id="f-date" onchange="updateFDateWeekday()" style="flex:1;">
           <span class="date-weekday" id="f-date-weekday"></span>
         </div>
       </div>
